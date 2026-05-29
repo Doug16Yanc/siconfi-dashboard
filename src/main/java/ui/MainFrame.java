@@ -322,7 +322,7 @@ public class MainFrame extends JFrame {
     }
 
     private JPanel buildStatusBar() {
-        statusBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 24, 6)); // ← campo da classe
+        statusBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 24, 6));
         statusBar.setBackground(new Color(10, 10, 20));
         statusBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(35, 35, 60)));
         statusBar.add(statusItem("DÓLAR",                "—",   "—", true));
