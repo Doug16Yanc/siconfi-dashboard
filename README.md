@@ -255,4 +255,3 @@ MIT License — veja [LICENSE](LICENSE) para detalhes.
 
 - [Siconfi — Sistema de Informações Contábeis e Fiscais do Setor Público Brasileiro](https://siconfi.tesouro.gov.br)
 - [API de Dados Abertos do BCB](https://dadosabertos.bcb.gov.br)
-- [Portal da Transparência do Governo do Estado do Ceará](https://www.transparencia.ce.gov.br)
