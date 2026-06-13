@@ -1,6 +1,6 @@
 package ui.dashboard;
 
-import ui.FontManager;
+import ui.theme.FontManager;
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;

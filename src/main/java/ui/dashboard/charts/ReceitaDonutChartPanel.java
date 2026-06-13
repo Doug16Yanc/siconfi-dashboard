@@ -3,7 +3,7 @@ package ui.dashboard.charts;
 import org.jfree.chart.*;
 import org.jfree.chart.plot.*;
 import org.jfree.data.general.*;
-import ui.FontManager;
+import ui.theme.FontManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

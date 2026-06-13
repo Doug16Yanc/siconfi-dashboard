@@ -1,4 +1,4 @@
-package ui;
+package ui.theme;
 
 import java.awt.*;
 import java.io.InputStream;

@@ -5,7 +5,7 @@ import org.jfree.chart.axis.*;
 import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.category.*;
 import org.jfree.data.category.*;
-import ui.FontManager;
+import ui.theme.FontManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

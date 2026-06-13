@@ -2,7 +2,7 @@ package ui.dashboard;
 
 import service.DashboardService;
 import service.DashboardService.DashboardData;
-import ui.FontManager;
+import ui.theme.FontManager;
 import ui.dashboard.charts.DespesaDonutChartPanel;
 import ui.dashboard.charts.ReceitaDonutChartPanel;
 import ui.dashboard.charts.WaterfallChartPanel;
