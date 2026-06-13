@@ -38,8 +38,8 @@ public class DashboardService {
             double dolar,
             String periodo,
             String idEnte,
-            int    ano,
-            int    numeroPeriodo
+            int ano,
+            int numeroPeriodo
     ) {}
 
     public DashboardData carregarTudo() {
@@ -60,10 +60,10 @@ public class DashboardService {
             List<RreoItem> a06 = fA06.get();
             System.out.println("[Service] Anexo 06 — itens: " + a06.size());
 
-            double despesaTotal      = extrair(a06, "DespesaPrimariaTotalExcetoFontesRPPS", "DESPESAS LIQUIDADAS");
-            double resultadoPrimario = extrair(a06, "ResultadoPrimarioSemRPPSAcimaDaLinha", "VALOR");
-            double receitaTotal      = extrair(a06, "ReceitasCorrentesExcetoFontesRPPS",    "RECEITAS REALIZADAS (a)");
-            double rclTotal          = extrair(a06, "ReceitaCorrenteLiquidaSemRPPS",         "RECEITAS REALIZADAS (a)");
+            double receitaTotal      = extrair(a06, "ReceitasCorrentesExcetoFontesRPPS",       "RECEITAS REALIZADAS (a)");
+            double despesaTotal      = extrair(a06, "DespesaPrimariaTotalExcetoFontesRPPS",    "DESPESAS LIQUIDADAS");
+            double resultadoPrimario = extrair(a06, "ResultadoPrimarioSemRPPSAcimaDaLinha",    "VALOR");
+            double rclTotal          = extrair(a06, "ReceitaPrimariaTotalExcetoFontesRPPS",    "RECEITAS REALIZADAS (a)");
 
             System.out.printf("[Extrator] Receita=%.2f Despesa=%.2f Primário=%.2f RCL=%.2f%n",
                     receitaTotal, despesaTotal, resultadoPrimario, rclTotal);
@@ -180,18 +180,21 @@ public class DashboardService {
     }
 
     private Map<String, Double> despesaPorFuncao(List<RreoItem> items) {
+        Map<String, Double> resultado = new java.util.LinkedHashMap<>();
+
         List<String> categorias = List.of(
                 "RREO6PessoalEEncargosSociais",
                 "RREO6OutrasDespesasCorrentes",
                 "RREO6AmortizacaoDaDivida",
-                "DespesasDeCapitalExcetoFontesRPPS",
+                "RREO6Investimentos",
                 "DespesasPrimariasCorrentesComFontesRPPS"
         );
-        Map<String, Double> resultado = new java.util.LinkedHashMap<>();
+
         items.stream()
                 .filter(i -> categorias.contains(i.co_conta))
                 .filter(i -> "DESPESAS LIQUIDADAS".equalsIgnoreCase(i.coluna))
                 .forEach(i -> resultado.merge(i.co_conta, i.vl_resultado, Double::sum));
+
         return resultado;
     }
 

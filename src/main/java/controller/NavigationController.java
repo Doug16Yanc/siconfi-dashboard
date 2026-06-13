@@ -2,13 +2,14 @@ package controller;
 
 import service.DashboardService;
 import ui.MainFrame;
-import ui.dashboard.DashboardPanel;
+import ui.dashboard.Dashboard;
 import ui.components.panels.TimeSeriesPanel;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 
 public class NavigationController {
@@ -91,8 +92,9 @@ public class NavigationController {
             try {
                 DashboardService.DashboardData data = service.carregarTudo(idEnte, ano, periodo);
                 String nomeEnte = service.getNomeEnte(idEnte);
+
                 SwingUtilities.invokeLater(() -> {
-                    frame.setContent(new DashboardPanel(data, nomeEnte, ano));
+                    frame.setContent(new Dashboard(data, nomeEnte, ano));
                     frame.atualizarIndicadores(data);
                 });
             } catch (Exception e) {
