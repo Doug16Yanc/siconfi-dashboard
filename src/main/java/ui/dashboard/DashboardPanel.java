@@ -34,15 +34,16 @@ public class DashboardPanel extends JPanel {
     private final JLabel lblStatus = new JLabel(
             "⏳ Buscando dados da API Siconfi + BCB...", SwingConstants.CENTER);
 
-    public DashboardPanel() {
+
+    public DashboardPanel(DashboardService.DashboardData data, String nomeEnte, int ano) {
         setLayout(new BorderLayout(0, 16));
         setBackground(BG);
         setBorder(new EmptyBorder(16, 16, 16, 16));
 
-        add(buildKpiRow(),   BorderLayout.NORTH);
-        add(buildCenter(),   BorderLayout.CENTER);
+        add(buildKpiRow(), BorderLayout.NORTH);
+        add(buildCenter(nomeEnte, ano), BorderLayout.CENTER);
 
-        carregarDados();
+        atualizar(data, nomeEnte, ano);
     }
 
     private JPanel buildKpiRow() {
@@ -62,8 +63,8 @@ public class DashboardPanel extends JPanel {
     private DespesaDonutChartPanel donutDespesa;
     private ReceitaDonutChartPanel donutReceita;
 
-    private JPanel buildCenter() {
-        JPanel center = new JPanel(new GridLayout(1, 3, 12, 0)); // ← era 2
+    private JPanel buildCenter(String nomeEnte, int ano) {
+        JPanel center = new JPanel(new GridLayout(1, 3, 12, 0));
         center.setBackground(BG);
         center.setPreferredSize(new Dimension(0, 340));
 
@@ -71,7 +72,7 @@ public class DashboardPanel extends JPanel {
         donutDespesa = new DespesaDonutChartPanel(Map.of());
         donutReceita = new ReceitaDonutChartPanel(Map.of());
 
-        center.add(wrapCard("Resultado Fiscal — Ceará 2025", waterfallChart));
+        center.add(wrapCard("Resultado Fiscal — " + nomeEnte + " " + ano, waterfallChart));
         center.add(wrapCard("Despesa por Categoria",          donutDespesa));
         center.add(wrapCard("Receita por Categoria",          donutReceita));
 
@@ -98,9 +99,13 @@ public class DashboardPanel extends JPanel {
         Thread.ofVirtual().start(() -> {
             try {
                 DashboardService service = new DashboardService();
+
                 DashboardData data = service.carregarTudo();
 
-                SwingUtilities.invokeLater(() -> atualizar(data));
+                String nomeEnte = service.getNomeEnte(data.idEnte());
+                int ano = data.ano();
+
+                SwingUtilities.invokeLater(() -> atualizar(data, nomeEnte, ano));
 
             } catch (Exception e) {
                 SwingUtilities.invokeLater(() -> {
@@ -111,7 +116,7 @@ public class DashboardPanel extends JPanel {
         });
     }
 
-    private void atualizar(DashboardData data) {
+    private void atualizar(DashboardData data, String nomeEnte, int ano) {
         cardReceita.atualizar(KpiCard.formatar(data.receitaTotal()),    8.72,  "vs 2024");
         cardDespesa.atualizar(KpiCard.formatar(data.despesaTotal()),    7.21,  "vs 2024");
         cardPrimario.atualizar(KpiCard.formatar(data.resultadoPrimario()), 21.45, "vs 2024");
@@ -125,7 +130,7 @@ public class DashboardPanel extends JPanel {
         donutDespesa = new DespesaDonutChartPanel(data.despesaPorFuncao());
         donutReceita = new ReceitaDonutChartPanel(data.receitaPorCategoria());
 
-        center.add(wrapCard("Resultado Fiscal — Ceará 2025", waterfallChart));
+        center.add(wrapCard("Resultado Fiscal — " + nomeEnte + " " + ano, waterfallChart));
         center.add(wrapCard("Despesa por Categoria",          donutDespesa));
         center.add(wrapCard("Receita por Categoria",          donutReceita));
 

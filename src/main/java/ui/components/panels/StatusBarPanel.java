@@ -1,11 +1,10 @@
-package ui.components;
+package ui.components.panels;
 
 import service.DashboardService;
 import ui.theme.FontManager;
 import ui.theme.Theme;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class StatusBarPanel extends JPanel {

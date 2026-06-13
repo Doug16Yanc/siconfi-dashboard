@@ -6,6 +6,20 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+/**
+ * DatabaseConfig — Fase 1.
+ *
+ * Adições em relação à versão original:
+ *  - estado_cache: mapeia código IBGE → sigla, nome, região.
+ *    Populado na primeira execução a partir de uma lista local;
+ *    evita dependência de API externa para metadados de UF.
+ *
+ *  - dashboard_snapshot: recebe UNIQUE (id_ente, an_exercicio, nr_periodo)
+ *    com ON CONFLICT DO UPDATE, permitindo atualização idempotente da série
+ *    histórica sem duplicatas mesmo com re-fetches concorrentes.
+ *
+ * O restante do schema (rreo_cache, bcb_cache) é idêntico à versão original.
+ */
 public class DatabaseConfig {
 
     private static HikariDataSource ds;
@@ -27,6 +41,7 @@ public class DatabaseConfig {
 
         ds = new HikariDataSource(cfg);
         criarTabelas();
+        popularEstados();
     }
 
     public static Connection getConnection() throws SQLException {
@@ -36,7 +51,6 @@ public class DatabaseConfig {
     public static void close() {
         if (ds != null && !ds.isClosed()) ds.close();
     }
-
 
     private static void criarTabelas() {
         String rreo = """
@@ -62,40 +76,109 @@ public class DatabaseConfig {
 
         String bcb = """
             CREATE TABLE IF NOT EXISTS bcb_cache (
-                id           SERIAL PRIMARY KEY,
-                serie        INT,
-                data_ref     DATE,
-                valor        NUMERIC(18,6),
-                fetched_at   TIMESTAMP DEFAULT NOW(),
+                id         SERIAL PRIMARY KEY,
+                serie      INT,
+                data_ref   DATE,
+                valor      NUMERIC(18,6),
+                fetched_at TIMESTAMP DEFAULT NOW(),
                 UNIQUE (serie, data_ref)
             );
             """;
 
         String snapshot = """
             CREATE TABLE IF NOT EXISTS dashboard_snapshot (
-                id                SERIAL PRIMARY KEY,
-                id_ente           VARCHAR(10),
-                an_exercicio      INT,
-                nr_periodo        INT,
-                receita_total     NUMERIC(18,2),
-                despesa_total     NUMERIC(18,2),
+                id                 SERIAL PRIMARY KEY,
+                id_ente            VARCHAR(10)   NOT NULL,
+                an_exercicio       INT           NOT NULL,
+                nr_periodo         INT           NOT NULL,
+                receita_total      NUMERIC(18,2),
+                despesa_total      NUMERIC(18,2),
                 resultado_primario NUMERIC(18,2),
-                rcl_total         NUMERIC(18,2),
-                selic             NUMERIC(8,4),
-                ipca_12m          NUMERIC(8,4),
-                dolar             NUMERIC(10,4),
-                created_at        TIMESTAMP DEFAULT NOW()
+                rcl_total          NUMERIC(18,2),
+                selic              NUMERIC(8,4),
+                ipca_12m           NUMERIC(8,4),
+                dolar              NUMERIC(10,4),
+                created_at         TIMESTAMP DEFAULT NOW(),
+                UNIQUE (id_ente, an_exercicio, nr_periodo)
             );
             """;
 
-        try (var con = getConnection();
-             var st  = con.createStatement()) {
+        String estados = """
+            CREATE TABLE IF NOT EXISTS estado_cache (
+                id_ente   VARCHAR(10) PRIMARY KEY,
+                sigla     CHAR(2)     NOT NULL,
+                nome      VARCHAR(60) NOT NULL,
+                regiao    VARCHAR(20) NOT NULL
+            );
+            """;
+
+        try (var con = getConnection(); var st = con.createStatement()) {
             st.execute(rreo);
             st.execute(bcb);
             st.execute(snapshot);
+            st.execute(estados);
             System.out.println("[DB] Tabelas verificadas/criadas com sucesso.");
         } catch (SQLException e) {
             throw new RuntimeException("Erro ao criar tabelas: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Popula estado_cache com os 26 estados + DF na primeira execução.
+     * Usa INSERT ... ON CONFLICT DO NOTHING — idempotente, sem duplicatas.
+     *
+     * Código IBGE de UF: 2 dígitos (11 = RO, 12 = AC ... 53 = DF).
+     * A API Siconfi usa esses mesmos códigos como id_ente para estados.
+     */
+    private static void popularEstados() {
+        String[][] estados = {
+                {"11","RO","Rondônia",           "Norte"},
+                {"12","AC","Acre",               "Norte"},
+                {"13","AM","Amazonas",           "Norte"},
+                {"14","RR","Roraima",            "Norte"},
+                {"15","PA","Pará",               "Norte"},
+                {"16","AP","Amapá",              "Norte"},
+                {"17","TO","Tocantins",          "Norte"},
+                {"21","MA","Maranhão",           "Nordeste"},
+                {"22","PI","Piauí",              "Nordeste"},
+                {"23","CE","Ceará",              "Nordeste"},
+                {"24","RN","Rio Grande do Norte","Nordeste"},
+                {"25","PB","Paraíba",            "Nordeste"},
+                {"26","PE","Pernambuco",         "Nordeste"},
+                {"27","AL","Alagoas",            "Nordeste"},
+                {"28","SE","Sergipe",            "Nordeste"},
+                {"29","BA","Bahia",              "Nordeste"},
+                {"31","MG","Minas Gerais",       "Sudeste"},
+                {"32","ES","Espírito Santo",     "Sudeste"},
+                {"33","RJ","Rio de Janeiro",     "Sudeste"},
+                {"35","SP","São Paulo",          "Sudeste"},
+                {"41","PR","Paraná",             "Sul"},
+                {"42","SC","Santa Catarina",     "Sul"},
+                {"43","RS","Rio Grande do Sul",  "Sul"},
+                {"50","MS","Mato Grosso do Sul", "Centro-Oeste"},
+                {"51","MT","Mato Grosso",        "Centro-Oeste"},
+                {"52","GO","Goiás",              "Centro-Oeste"},
+                {"53","DF","Distrito Federal",   "Centro-Oeste"},
+        };
+
+        String sql = """
+            INSERT INTO estado_cache (id_ente, sigla, nome, regiao)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT (id_ente) DO NOTHING
+            """;
+
+        try (var con = getConnection(); var ps = con.prepareStatement(sql)) {
+            for (String[] e : estados) {
+                ps.setString(1, e[0]);
+                ps.setString(2, e[1]);
+                ps.setString(3, e[2]);
+                ps.setString(4, e[3]);
+                ps.addBatch();
+            }
+            ps.executeBatch();
+            System.out.println("[DB] estado_cache populado.");
+        } catch (SQLException e) {
+            System.err.println("[DB] Aviso ao popular estados: " + e.getMessage());
         }
     }
 }

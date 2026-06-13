@@ -1,10 +1,11 @@
 package ui;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import controller.NavigationController;
 import service.DashboardService;
 import ui.components.NavItem;
-import ui.components.StatusBarPanel;
-import ui.components.TopBarPanel;
+import ui.components.panels.StatusBarPanel;
+import ui.components.panels.TopBarPanel;
 import ui.theme.FontManager;
 import ui.theme.Theme;
 
@@ -14,8 +15,12 @@ import java.awt.*;
 
 public class MainFrame extends JFrame {
 
-    private JPanel contentArea;
-    private StatusBarPanel statusBar;
+    private JPanel          contentArea;
+    private StatusBarPanel  statusBar;
+    private JPanel          sidebar;
+
+    private final DashboardService     dashboardService = new DashboardService();
+    private final NavigationController navController;
 
     public MainFrame() {
         setTitle("Relatório orçamentário - Brasil");
@@ -26,20 +31,27 @@ public class MainFrame extends JFrame {
         setLayout(new BorderLayout());
         getContentPane().setBackground(Theme.BG_DARK);
 
-        statusBar = new StatusBarPanel();
+        statusBar    = new StatusBarPanel();
+        navController = new NavigationController(this, dashboardService);
 
-        add(buildSidebar(), BorderLayout.WEST);
-        add(buildMain(),    BorderLayout.CENTER);
+        sidebar = buildSidebar();
+
+        add(sidebar,      BorderLayout.WEST);
+        add(buildMain(),  BorderLayout.CENTER);
 
         setVisible(true);
+
+        navController.registrar(sidebar);
+
+        navController.navegarPara(NavigationController.NavDestino.VISAO_GERAL);
     }
 
     private JPanel buildSidebar() {
-        JPanel sidebar = new JPanel();
-        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBackground(Theme.BG_SIDEBAR);
-        sidebar.setPreferredSize(new Dimension(240, 0));
-        sidebar.setBorder(null);
+        JPanel sb = new JPanel();
+        sb.setLayout(new BoxLayout(sb, BoxLayout.Y_AXIS));
+        sb.setBackground(Theme.BG_SIDEBAR);
+        sb.setPreferredSize(new Dimension(240, 0));
+        sb.setBorder(null);
 
         JPanel logoPanel = new JPanel(new BorderLayout());
         logoPanel.setBackground(Theme.BG_SIDEBAR);
@@ -59,43 +71,47 @@ public class MainFrame extends JFrame {
         logoText.add(logo);
         logoPanel.add(logoText, BorderLayout.CENTER);
         logoPanel.setMaximumSize(new Dimension(270, 70));
-        sidebar.add(logoPanel);
+        sb.add(logoPanel);
 
-        sidebar.add(separator());
+        sb.add(separator());
 
-        sidebar.add(sectionLabel("CONSULTAS"));
-        sidebar.add(new NavItem("home.svg",        "Visão Geral",        true));
-        sidebar.add(new NavItem("receitas.svg",    "Receitas",           false));
-        sidebar.add(new NavItem("despesas.svg",    "Despesas",           false));
-        sidebar.add(new NavItem("fiscal.svg",      "Resultado Fiscal",   false));
-        sidebar.add(new NavItem("divida.svg",      "Dívida Consolidada", false));
-        sidebar.add(new NavItem("folder.svg",      "Restos a Pagar",     false));
-        sidebar.add(new NavItem("calendar.svg",    "Orçamentos",         false));
-        sidebar.add(new NavItem("chart-bar.svg",   "Comparações",        false));
+        sb.add(sectionLabel("CONSULTAS"));
+        sb.add(new NavItem("home.svg",        "Visão Geral",        true));
+        sb.add(new NavItem("receitas.svg",    "Receitas",           false));
+        sb.add(new NavItem("despesas.svg",    "Despesas",           false));
+        sb.add(new NavItem("fiscal.svg",      "Resultado Fiscal",   false));
+        sb.add(new NavItem("divida.svg",      "Dívida Consolidada", false));
+        sb.add(new NavItem("folder.svg",      "Restos a Pagar",     false));
+        sb.add(new NavItem("calendar.svg",    "Orçamentos",         false));
+        sb.add(new NavItem("chart-bar.svg",   "Comparações",        false));
 
-        sidebar.add(sectionLabel("ENTES"));
-        sidebar.add(new NavItem("flag.svg",        "União",              false));
-        sidebar.add(new NavItem("map.svg",         "Estados",            false));
-        sidebar.add(new NavItem("city.svg",        "Municípios",         false));
+        sb.add(sectionLabel("ENTES"));
+        sb.add(new NavItem("flag.svg",        "União",              false));
+        sb.add(new NavItem("map.svg",         "Estados",            false));
+        sb.add(new NavItem("city.svg",        "Municípios",         false));
 
-        sidebar.add(sectionLabel("FERRAMENTAS"));
-        sidebar.add(new NavItem("trending-up.svg", "Indicadores Fiscais",false));
-        sidebar.add(new NavItem("file-text.svg",   "Relatórios",         false));
-        sidebar.add(new NavItem("download.svg",    "Exportar Dados",     false));
-        sidebar.add(new NavItem("clock.svg",       "Agendamentos",       false));
-        sidebar.add(new NavItem("settings.svg",    "Configurações",      false));
-        sidebar.add(new NavItem("info.svg",        "Sobre",              false));
+        sb.add(sectionLabel("FERRAMENTAS"));
+        sb.add(new NavItem("trending-up.svg", "Indicadores Fiscais",false));
+        sb.add(new NavItem("file-text.svg",   "Relatórios",         false));
+        sb.add(new NavItem("download.svg",    "Exportar Dados",     false));
+        sb.add(new NavItem("clock.svg",       "Agendamentos",       false));
+        sb.add(new NavItem("settings.svg",    "Configurações",      false));
+        sb.add(new NavItem("info.svg",        "Sobre",              false));
 
-        sidebar.add(Box.createVerticalStrut(12));
-        return sidebar;
+        sb.add(Box.createVerticalStrut(12));
+        return sb;
     }
 
     private JPanel buildMain() {
         JPanel main = new JPanel(new BorderLayout());
         main.setBackground(Theme.BG_DARK);
-        main.add(new TopBarPanel(), BorderLayout.NORTH);
-        main.add(buildContent(),    BorderLayout.CENTER);
-        main.add(statusBar,         BorderLayout.SOUTH);
+
+        TopBarPanel topBar = new TopBarPanel();
+        topBar.bindNavigationController(navController);
+
+        main.add(topBar,          BorderLayout.NORTH);
+        main.add(buildContent(),  BorderLayout.CENTER);
+        main.add(statusBar,       BorderLayout.SOUTH);
         return main;
     }
 
@@ -103,7 +119,6 @@ public class MainFrame extends JFrame {
         contentArea = new JPanel(new BorderLayout());
         contentArea.setBackground(Theme.BG_DARK);
         contentArea.setBorder(new EmptyBorder(16, 16, 16, 16));
-        contentArea.add(new ui.dashboard.DashboardPanel(), BorderLayout.CENTER);
 
         JScrollPane scroll = new JScrollPane(contentArea);
         scroll.setBorder(null);
@@ -122,6 +137,7 @@ public class MainFrame extends JFrame {
     public void atualizarIndicadores(DashboardService.DashboardData data) {
         statusBar.atualizarDados(data);
     }
+
 
     private JLabel sectionLabel(String text) {
         JLabel lbl = new JLabel(text);
