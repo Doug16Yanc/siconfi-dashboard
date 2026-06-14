@@ -16,4 +16,5 @@ public class RreoItem {
     @SerializedName("cod_ibge")     public String id_ente;
     @SerializedName("coluna")       public String coluna;
     @SerializedName("rotulo")       public String rotulo;
+    @SerializedName("populacao") public long populacao;
 }

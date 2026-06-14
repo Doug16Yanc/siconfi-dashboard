@@ -1,46 +1,14 @@
 package ui.components.panels;
 
 import ui.theme.FontManager;
-
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-
 
 public class PerCapitaPanel extends JPanel {
 
     private static final Color BG       = new Color(22, 22, 38);
     private static final Color BG_TRACK = new Color(40, 40, 65);
-
-    private static final java.util.Map<String, Long> POPULACAO = java.util.Map.ofEntries(
-            java.util.Map.entry("11", 1_815_278L),  // RO
-            java.util.Map.entry("12",   906_876L),  // AC
-            java.util.Map.entry("13", 4_269_995L),  // AM
-            java.util.Map.entry("14",   652_713L),  // RR
-            java.util.Map.entry("15", 8_777_124L),  // PA
-            java.util.Map.entry("16",   877_613L),  // AP
-            java.util.Map.entry("17", 1_607_363L),  // TO
-            java.util.Map.entry("21", 7_153_262L),  // MA
-            java.util.Map.entry("22", 3_281_480L),  // PI
-            java.util.Map.entry("23", 9_187_103L),  // CE
-            java.util.Map.entry("24", 3_560_903L),  // RN
-            java.util.Map.entry("25", 4_059_905L),  // PB
-            java.util.Map.entry("26", 9_674_793L),  // PE
-            java.util.Map.entry("27", 3_337_513L),  // AL
-            java.util.Map.entry("28", 2_338_474L),  // SE
-            java.util.Map.entry("29",15_617_459L),  // BA
-            java.util.Map.entry("31",21_411_923L),  // MG
-            java.util.Map.entry("32", 4_108_508L),  // ES
-            java.util.Map.entry("33",17_463_349L),  // RJ
-            java.util.Map.entry("35",46_024_937L),  // SP
-            java.util.Map.entry("41",11_835_379L),  // PR
-            java.util.Map.entry("42", 7_610_361L),  // SC
-            java.util.Map.entry("43",11_466_630L),  // RS
-            java.util.Map.entry("50", 2_839_188L),  // MS
-            java.util.Map.entry("51", 3_658_813L),  // MT
-            java.util.Map.entry("52", 7_206_589L),  // GO
-            java.util.Map.entry("53", 2_923_369L)   // DF
-    );
 
     private record IndicadorPC(
             String label,
@@ -54,15 +22,16 @@ public class PerCapitaPanel extends JPanel {
     private final String nomeEnte;
     private final long   populacao;
 
+    // Construtor limpo, recebendo a população tratada de forma dinâmica
     public PerCapitaPanel(double receita, double despesa, double resultado,
-                          String idEnte, String nomeEnte) {
+                          long populacao, String nomeEnte) {
         setOpaque(false);
         this.nomeEnte  = nomeEnte;
-        this.populacao = POPULACAO.getOrDefault(idEnte, 1L);
+        this.populacao = populacao > 0 ? populacao : 1L; // Evita divisão por zero
 
-        double recPC  = receita   / populacao;
-        double despPC = despesa   / populacao;
-        double resPC  = resultado / populacao;
+        double recPC  = receita   / this.populacao;
+        double despPC = despesa   / this.populacao;
+        double resPC  = resultado / this.populacao;
 
         indicadores = List.of(
                 new IndicadorPC("Receita / hab",    recPC,  2_000,  8_000, new Color(0,  180, 100)),
@@ -85,7 +54,7 @@ public class PerCapitaPanel extends JPanel {
 
         g2.setFont(FontManager.inter(14f));
         g2.setColor(new Color(100, 100, 140));
-        String pop = String.format("População: %,.0f hab.", (double) populacao);
+        String pop = String.format("População: %,d hab. (%s)", populacao, nomeEnte);
         g2.drawString(pop, padLeft, padTop);
 
         int rowH  = (getHeight() - padTop - 20) / n;

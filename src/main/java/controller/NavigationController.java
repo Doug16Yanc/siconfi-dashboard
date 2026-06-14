@@ -9,8 +9,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
-
 
 public class NavigationController {
 
@@ -91,10 +89,9 @@ public class NavigationController {
         Thread.ofVirtual().start(() -> {
             try {
                 DashboardService.DashboardData data = service.carregarTudo(idEnte, ano, periodo);
-                String nomeEnte = service.getNomeEnte(idEnte);
 
                 SwingUtilities.invokeLater(() -> {
-                    frame.setContent(new Dashboard(data, nomeEnte, ano));
+                    frame.setContent(new Dashboard(data));
                     frame.atualizarIndicadores(data);
                 });
             } catch (Exception e) {

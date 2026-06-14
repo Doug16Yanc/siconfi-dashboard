@@ -4,10 +4,7 @@ import api.client.BcbClient;
 import api.client.SiconfiClient;
 import api.dto.RreoItem;
 import api.dto.RreoResponse;
-import db.BcbRepository;
-import db.DatabaseConfig;
-import db.RreoRepository;
-import db.SnapshotRepository;
+import db.*;
 
 import java.util.List;
 import java.util.Map;
@@ -21,6 +18,7 @@ public class DashboardService {
     private final RreoRepository     rreoRepo = new RreoRepository();
     private final BcbRepository      bcbRepo  = new BcbRepository();
     private final SnapshotRepository snapRepo = new SnapshotRepository();
+    private final EstadoRepository estadoRepo = new EstadoRepository();
 
     public static final String DEFAULT_ID_ENTE = "23"; // Defaults
     public static final int    DEFAULT_ANO     = 2025;
@@ -36,6 +34,8 @@ public class DashboardService {
             double selic,
             double ipca12m,
             double dolar,
+            long populacao,
+            String nomeEnte,
             String periodo,
             String idEnte,
             int ano,
@@ -56,6 +56,7 @@ public class DashboardService {
             Future<Double>         fSelic = executor.submit(this::fetchSelicComCache);
             Future<Double>         fIpca  = executor.submit(this::fetchIpcaComCache);
             Future<Double>         fDolar = executor.submit(this::fetchDolarComCache);
+            Future<EstadoRepository.InfoEstado> fEstado = executor.submit(() -> estadoRepo.buscarPorId(idEnte));
 
             List<RreoItem> a06 = fA06.get();
             System.out.println("[Service] Anexo 06 — itens: " + a06.size());
@@ -68,6 +69,8 @@ public class DashboardService {
             System.out.printf("[Extrator] Receita=%.2f Despesa=%.2f Primário=%.2f RCL=%.2f%n",
                     receitaTotal, despesaTotal, resultadoPrimario, rclTotal);
 
+            EstadoRepository.InfoEstado infoEstado = fEstado.get();
+
             DashboardData data = new DashboardData(
                     receitaTotal,
                     despesaTotal,
@@ -78,6 +81,8 @@ public class DashboardService {
                     fSelic.get(),
                     fIpca.get(),
                     fDolar.get(),
+                    infoEstado.populacao(),
+                    infoEstado.nome(),
                     formatarPeriodo(ano, periodo),
                     idEnte,
                     ano,

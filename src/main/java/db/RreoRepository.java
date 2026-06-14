@@ -11,7 +11,7 @@ public class RreoRepository {
     public void salvarBatch(List<RreoItem> items) {
         if (items == null || items.isEmpty()) return;
 
-        String sql = """
+        String sqlRreo = """
             INSERT INTO rreo_cache
                 (id_ente, an_exercicio, nr_periodo, no_anexo,
                  co_esfera, co_uf, no_uf, no_conta, co_conta,
@@ -23,39 +23,54 @@ public class RreoRepository {
                 fetched_at   = NOW()
             """;
 
+        String sqlEstado = """
+            UPDATE estado_cache
+            SET populacao = ?
+            WHERE id_ente = ?
+            """;
+
         try (Connection con = DatabaseConfig.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+             PreparedStatement psRreo = con.prepareStatement(sqlRreo);
+             PreparedStatement psEstado = con.prepareStatement(sqlEstado)) {
 
             con.setAutoCommit(false);
 
             for (RreoItem i : items) {
-                ps.setString(1,  i.id_ente);
-                ps.setInt   (2,  i.an_exercicio);
-                ps.setInt   (3,  i.nr_periodo);
-                ps.setString(4,  i.no_anexo);
-                ps.setString(5,  i.co_esfera);
-                ps.setString(6,  i.co_uf);
-                ps.setString(7,  i.no_uf);
-                ps.setString(8,  i.no_conta);
-                ps.setString(9,  i.co_conta);
-                ps.setString(10, i.coluna);
-                ps.setString(11, i.rotulo);
-                ps.setDouble(12, i.vl_resultado);
-                ps.setString(13, i.no_periodo);
-                ps.addBatch();
+                psRreo.setString(1,  i.id_ente);
+                psRreo.setInt   (2,  i.an_exercicio);
+                psRreo.setInt   (3,  i.nr_periodo);
+                psRreo.setString(4,  i.no_anexo);
+                psRreo.setString(5,  i.co_esfera);
+                psRreo.setString(6,  i.co_uf);
+                psRreo.setString(7,  i.no_uf);
+                psRreo.setString(8,  i.no_conta);
+                psRreo.setString(9,  i.co_conta);
+                psRreo.setString(10, i.coluna);
+                psRreo.setString(11, i.rotulo);
+                psRreo.setDouble(12, i.vl_resultado);
+                psRreo.setString(13, i.no_periodo);
+                psRreo.addBatch();
             }
 
-            ps.executeBatch();
+            psRreo.executeBatch();
+
+            RreoItem primeiroItem = items.get(0);
+            if (primeiroItem.populacao > 0 && primeiroItem.id_ente != null) {
+                psEstado.setLong(1, primeiroItem.populacao);
+                psEstado.setString(2, primeiroItem.id_ente);
+                psEstado.executeUpdate();
+            }
+
             con.commit();
-            System.out.printf("[DB] %d itens RREO salvos.%n", items.size());
+            System.out.printf("[DB] %d itens RREO salvos e população (%d) do ente %s atualizada.%n",
+                    items.size(), primeiroItem.populacao, primeiroItem.id_ente);
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erro ao salvar RREO: " + e.getMessage(), e);
+            throw new RuntimeException("Erro ao salvar RREO e atualizar população: " + e.getMessage(), e);
         }
     }
 
-    public List<RreoItem> buscarCache(String idEnte, int ano,
-                                      int periodo, String anexo) {
+    public List<RreoItem> buscarCache(String idEnte, int ano, int periodo, String anexo) {
         String sql = """
             SELECT id_ente, an_exercicio, nr_periodo, no_anexo,
                    co_esfera, co_uf, no_uf, no_conta, co_conta,

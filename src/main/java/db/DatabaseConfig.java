@@ -6,20 +6,6 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-/**
- * DatabaseConfig — Fase 1.
- *
- * Adições em relação à versão original:
- *  - estado_cache: mapeia código IBGE → sigla, nome, região.
- *    Populado na primeira execução a partir de uma lista local;
- *    evita dependência de API externa para metadados de UF.
- *
- *  - dashboard_snapshot: recebe UNIQUE (id_ente, an_exercicio, nr_periodo)
- *    com ON CONFLICT DO UPDATE, permitindo atualização idempotente da série
- *    histórica sem duplicatas mesmo com re-fetches concorrentes.
- *
- * O restante do schema (rreo_cache, bcb_cache) é idêntico à versão original.
- */
 public class DatabaseConfig {
 
     private static HikariDataSource ds;
@@ -108,7 +94,8 @@ public class DatabaseConfig {
                 id_ente   VARCHAR(10) PRIMARY KEY,
                 sigla     CHAR(2)     NOT NULL,
                 nome      VARCHAR(60) NOT NULL,
-                regiao    VARCHAR(20) NOT NULL
+                regiao    VARCHAR(20) NOT NULL,
+                populacao BIGINT
             );
             """;
 
@@ -123,13 +110,6 @@ public class DatabaseConfig {
         }
     }
 
-    /**
-     * Popula estado_cache com os 26 estados + DF na primeira execução.
-     * Usa INSERT ... ON CONFLICT DO NOTHING — idempotente, sem duplicatas.
-     *
-     * Código IBGE de UF: 2 dígitos (11 = RO, 12 = AC ... 53 = DF).
-     * A API Siconfi usa esses mesmos códigos como id_ente para estados.
-     */
     private static void popularEstados() {
         String[][] estados = {
                 {"11","RO","Rondônia",           "Norte"},

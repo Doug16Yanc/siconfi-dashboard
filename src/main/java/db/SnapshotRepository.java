@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-
 public class SnapshotRepository {
 
     public void salvar(String idEnte, int ano, int periodo, DashboardData d) {
@@ -50,11 +49,15 @@ public class SnapshotRepository {
     }
 
     public Optional<DashboardData> buscarPorPeriodo(String idEnte, int ano, int periodo) {
+        // Adicionado JOIN para trazer nome e populacao do estado cacheado
         String sql = """
-            SELECT receita_total, despesa_total, resultado_primario,
-                   rcl_total, selic, ipca_12m, dolar
-            FROM dashboard_snapshot
-            WHERE id_ente = ? AND an_exercicio = ? AND nr_periodo = ?
+            SELECT s.receita_total, s.despesa_total, s.resultado_primario,
+                   s.rcl_total, s.selic, s.ipca_12m, s.dolar,
+                   COALESCE(e.nome, 'Ente ' || s.id_ente) as nome_ente,
+                   COALESCE(e.populacao, 1) as populacao
+            FROM dashboard_snapshot s
+            LEFT JOIN estado_cache e ON s.id_ente = e.id_ente
+            WHERE s.id_ente = ? AND s.an_exercicio = ? AND s.nr_periodo = ?
             """;
 
         try (var con = DatabaseConfig.getConnection();
@@ -73,12 +76,16 @@ public class SnapshotRepository {
     }
 
     public List<DashboardData> buscarSerie(String idEnte, int ano) {
+        // Adicionado JOIN para trazer nome e populacao na listagem da série temporal
         String sql = """
-            SELECT receita_total, despesa_total, resultado_primario,
-                   rcl_total, selic, ipca_12m, dolar, nr_periodo
-            FROM dashboard_snapshot
-            WHERE id_ente = ? AND an_exercicio = ?
-            ORDER BY nr_periodo ASC
+            SELECT s.receita_total, s.despesa_total, s.resultado_primario,
+                   s.rcl_total, s.selic, s.ipca_12m, s.dolar, s.nr_periodo,
+                   COALESCE(e.nome, 'Ente ' || s.id_ente) as nome_ente,
+                   COALESCE(e.populacao, 1) as populacao
+            FROM dashboard_snapshot s
+            LEFT JOIN estado_cache e ON s.id_ente = e.id_ente
+            WHERE s.id_ente = ? AND s.an_exercicio = ?
+            ORDER BY s.nr_periodo ASC
             """;
 
         List<DashboardData> serie = new ArrayList<>();
@@ -108,6 +115,8 @@ public class SnapshotRepository {
                 rs.getDouble("selic"),
                 rs.getDouble("ipca_12m"),
                 rs.getDouble("dolar"),
+                rs.getLong("populacao"),
+                rs.getString("nome_ente"),
                 formatarPeriodo(ano, periodo),
                 idEnte,
                 ano,

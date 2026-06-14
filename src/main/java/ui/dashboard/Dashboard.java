@@ -31,16 +31,16 @@ public class Dashboard extends JPanel {
     private final JLabel lblStatus = new JLabel(
             "⏳ Buscando dados da API Siconfi + BCB...", SwingConstants.CENTER);
 
-
-    public Dashboard(DashboardData data, String nomeEnte, int ano) {
+    // Construtor unificado e mais limpo
+    public Dashboard(DashboardData data) {
         setLayout(new BorderLayout(0, 16));
         setBackground(BG);
         setBorder(new EmptyBorder(16, 16, 16, 16));
 
-        add(buildKpiRow(),              BorderLayout.NORTH);
-        add(buildLinhas(nomeEnte, ano, data), BorderLayout.CENTER);
+        add(buildKpiRow(),          BorderLayout.NORTH);
+        add(buildLinhas(data),      BorderLayout.CENTER);
 
-        atualizar(data, nomeEnte, ano);
+        atualizar(data);
     }
 
     private JPanel buildKpiRow() {
@@ -55,15 +55,15 @@ public class Dashboard extends JPanel {
         return row;
     }
 
-    private JPanel buildLinhas(String nomeEnte, int ano, DashboardData data) {
-        JPanel linhas = new JPanel(new GridLayout(2, 1, 0, 12));
-        linhas.setBackground(BG);
-        linhas.add(buildLinha1(nomeEnte, ano));
-        linhas.add(buildLinha2(data, nomeEnte));
-        return linhas;
+    private JPanel buildLinhas(DashboardData data) {
+        JPanel mapLinhas = new JPanel(new GridLayout(2, 1, 0, 12));
+        mapLinhas.setBackground(BG);
+        mapLinhas.add(buildLinha1(data));
+        mapLinhas.add(buildLinha2(data));
+        return mapLinhas;
     }
 
-    private JPanel buildLinha1(String nomeEnte, int ano) {
+    private JPanel buildLinha1(DashboardData data) {
         JPanel row = new JPanel(new GridLayout(1, 3, 12, 0));
         row.setBackground(BG);
         row.setPreferredSize(new Dimension(0, 340));
@@ -72,27 +72,27 @@ public class Dashboard extends JPanel {
         donutDespesa   = new DespesaDonutChartPanel(Map.of());
         donutReceita   = new ReceitaDonutChartPanel(Map.of());
 
-        row.add(wrapCard("Resultado Fiscal — " + nomeEnte + " " + ano, waterfallChart));
+        row.add(wrapCard("Resultado Fiscal — " + data.nomeEnte() + " " + data.ano(), waterfallChart));
         row.add(wrapCard("Despesa por Categoria", donutDespesa));
         row.add(wrapCard("Receita por Categoria", donutReceita));
         return row;
     }
 
-    private JPanel buildLinha2(DashboardData data, String nomeEnte) {
+    private JPanel buildLinha2(DashboardData data) {
         JPanel row = new JPanel(new GridLayout(1, 2, 12, 0));
         row.setBackground(BG);
         row.setPreferredSize(new Dimension(0, 280));
 
         double pessoal     = data.despesaPorFuncao().getOrDefault("RREO6PessoalEEncargosSociais",      0.0);
         double amortizacao = data.despesaPorFuncao().getOrDefault("RREO6AmortizacaoDaDivida",           0.0);
-        double capital     = data.despesaPorFuncao().getOrDefault("RREO6Investimentos",            0.0); // ← corrigido
+        double capital     = data.despesaPorFuncao().getOrDefault("RREO6Investimentos",                 0.0);
         double rcl         = data.rclTotal();
 
         LrfBulletPanel lrf = new LrfBulletPanel(pessoal, amortizacao, capital, rcl);
 
         PerCapitaPanel perCapita = new PerCapitaPanel(
                 data.receitaTotal(), data.despesaTotal(), data.resultadoPrimario(),
-                data.idEnte(), nomeEnte);
+                data.populacao(), data.nomeEnte());
 
         row.add(wrapCard("Indicadores LRF", lrf));
         row.add(wrapCard("Indicadores Per Capita", perCapita));
@@ -152,7 +152,7 @@ public class Dashboard extends JPanel {
         return card;
     }
 
-    private void atualizar(DashboardData data, String nomeEnte, int ano) {
+    public void atualizar(DashboardData data) {
         cardReceita .atualizar(KpiCard.formatar(data.receitaTotal()),        8.72,  "vs 2024");
         cardDespesa .atualizar(KpiCard.formatar(data.despesaTotal()),        7.21,  "vs 2024");
         cardPrimario.atualizar(KpiCard.formatar(data.resultadoPrimario()),  21.45,  "vs 2024");
@@ -168,7 +168,7 @@ public class Dashboard extends JPanel {
         donutDespesa   = new DespesaDonutChartPanel(data.despesaPorFuncao());
         donutReceita   = new ReceitaDonutChartPanel(data.receitaPorCategoria());
 
-        linha1.add(wrapCard("Resultado Fiscal — " + nomeEnte + " " + ano, waterfallChart));
+        linha1.add(wrapCard("Resultado Fiscal — " + data.nomeEnte() + " " + data.ano(), waterfallChart));
         linha1.add(wrapCard("Despesa por Categoria", donutDespesa));
         linha1.add(wrapCard("Receita por Categoria", donutReceita));
 
