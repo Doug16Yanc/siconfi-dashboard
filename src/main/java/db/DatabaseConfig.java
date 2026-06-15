@@ -27,6 +27,7 @@ public class DatabaseConfig {
 
         ds = new HikariDataSource(cfg);
         criarTabelas();
+        migrarTabelas();
         popularEstados();
     }
 
@@ -73,18 +74,26 @@ public class DatabaseConfig {
 
         String snapshot = """
             CREATE TABLE IF NOT EXISTS dashboard_snapshot (
-                id                 SERIAL PRIMARY KEY,
-                id_ente            VARCHAR(10)   NOT NULL,
-                an_exercicio       INT           NOT NULL,
-                nr_periodo         INT           NOT NULL,
-                receita_total      NUMERIC(18,2),
-                despesa_total      NUMERIC(18,2),
-                resultado_primario NUMERIC(18,2),
-                rcl_total          NUMERIC(18,2),
-                selic              NUMERIC(8,4),
-                ipca_12m           NUMERIC(8,4),
-                dolar              NUMERIC(10,4),
-                created_at         TIMESTAMP DEFAULT NOW(),
+                id                        SERIAL PRIMARY KEY,
+                id_ente                   VARCHAR(10)   NOT NULL,
+                an_exercicio              INT           NOT NULL,
+                nr_periodo                INT           NOT NULL,
+                receita_total             NUMERIC(18,2),
+                despesa_total             NUMERIC(18,2),
+                resultado_primario        NUMERIC(18,2),
+                rcl_total                 NUMERIC(18,2),
+                selic                     NUMERIC(8,4),
+                ipca_12m                  NUMERIC(8,4),
+                dolar                     NUMERIC(10,4),
+                crescimento_pib           NUMERIC(8,4),
+                divida_bruta_pib          NUMERIC(8,4),
+                populacao                 BIGINT,
+                nome_ente                 VARCHAR(60),
+                mde_percentual_aplicado   NUMERIC(8,4)  DEFAULT 0,
+                op_credito_total          NUMERIC(18,2) DEFAULT 0,
+                op_credito_limite_rcl     NUMERIC(18,2) DEFAULT 0,
+                op_credito_percentual_rcl NUMERIC(8,4)  DEFAULT 0,
+                created_at                TIMESTAMP DEFAULT NOW(),
                 UNIQUE (id_ente, an_exercicio, nr_periodo)
             );
             """;
@@ -107,6 +116,36 @@ public class DatabaseConfig {
             System.out.println("[DB] Tabelas verificadas/criadas com sucesso.");
         } catch (SQLException e) {
             throw new RuntimeException("Erro ao criar tabelas: " + e.getMessage(), e);
+        }
+    }
+
+    private static void migrarTabelas() {
+        String[] migracoes = {
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS crescimento_pib           NUMERIC(8,4)  DEFAULT 0",
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS divida_bruta_pib          NUMERIC(8,4)  DEFAULT 0",
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS populacao                 BIGINT        DEFAULT 0",
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS nome_ente                 VARCHAR(60)   DEFAULT ''",
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS mde_percentual_aplicado   NUMERIC(8,4)  DEFAULT 0",
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS op_credito_total          NUMERIC(18,2) DEFAULT 0",
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS op_credito_limite_rcl     NUMERIC(18,2) DEFAULT 0",
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS op_credito_percentual_rcl NUMERIC(8,4)  DEFAULT 0",
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS restos_processados     NUMERIC(18,2) DEFAULT 0",
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS restos_nao_processados NUMERIC(18,2) DEFAULT 0",
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS restos_total           NUMERIC(18,2) DEFAULT 0",
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS divida_consolidada        NUMERIC(18,2) DEFAULT 0",
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS divida_consolidada_liquida NUMERIC(18,2) DEFAULT 0",
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS deducoes_divida           NUMERIC(18,2) DEFAULT 0",
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS amortizacao_dotacao       NUMERIC(18,2) DEFAULT 0",
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS amortizacao_liquidado     NUMERIC(18,2) DEFAULT 0",
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS juros_liquidado           NUMERIC(18,2) DEFAULT 0",
+                "ALTER TABLE dashboard_snapshot ADD COLUMN IF NOT EXISTS juros_dotacao             NUMERIC(18,2) DEFAULT 0"
+        };
+
+        try (var con = getConnection(); var st = con.createStatement()) {
+            for (String ddl : migracoes) st.execute(ddl);
+            System.out.println("[DB] Migrações aplicadas com sucesso.");
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao migrar tabelas: " + e.getMessage(), e);
         }
     }
 

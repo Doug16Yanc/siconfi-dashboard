@@ -14,6 +14,15 @@ public class SiconfiClient {
     private static final String BASE =
             "https://apidatalake.tesouro.gov.br/ords/siconfi/tt";
 
+    public static final String ANEXO_01 = "RREO-Anexo 01";
+    public static final String ANEXO_02 = "RREO-Anexo 02";
+    public static final String ANEXO_03 = "RREO-Anexo 03";
+    public static final String ANEXO_06 = "RREO-Anexo 06";
+    public static final String ANEXO_08 = "RREO-Anexo 08";
+    public static final String ANEXO_09 = "RREO-Anexo 09";
+    public static final String ANEXO_12 = "RREO-Anexo 12";
+    public static final String ANEXO_13 = "RREO-Anexo 13";
+
     private final OkHttpClient http = new OkHttpClient.Builder()
             .connectTimeout(45, TimeUnit.SECONDS)
             .readTimeout(120, TimeUnit.SECONDS)
@@ -58,21 +67,5 @@ public class SiconfiClient {
         } catch (IOException e) {
             throw new RuntimeException("Erro Siconfi: " + e.getMessage(), e);
         }
-    }
-
-    public RreoResponse fetchAnexo01CE(int periodo) {
-        return fetchRreo(2025, periodo, "RREO-Anexo 01", "23", "E");
-    }
-
-    public RreoResponse fetchAnexo02CE(int periodo) {
-        return fetchRreo(2025, periodo, "RREO-Anexo 02", "23", "E");
-    }
-
-    public RreoResponse fetchAnexo03CE(int periodo) {
-        return fetchRreo(2025, periodo, "RREO-Anexo 03", "23", "E");
-    }
-
-    public RreoResponse fetchAnexo06CE(int periodo) {
-        return fetchRreo(2025, periodo, "RREO-Anexo 06", "23", "E");
     }
 }

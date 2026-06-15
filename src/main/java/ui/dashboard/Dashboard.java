@@ -1,6 +1,7 @@
 package ui.dashboard;
 
 import service.DashboardService.DashboardData;
+import ui.components.KpiCard;
 import ui.components.panels.LrfBulletPanel;
 import ui.components.panels.PerCapitaPanel;
 import ui.theme.FontManager;
@@ -31,7 +32,6 @@ public class Dashboard extends JPanel {
     private final JLabel lblStatus = new JLabel(
             "⏳ Buscando dados da API Siconfi + BCB...", SwingConstants.CENTER);
 
-    // Construtor unificado e mais limpo
     public Dashboard(DashboardData data) {
         setLayout(new BorderLayout(0, 16));
         setBackground(BG);
@@ -136,7 +136,7 @@ public class Dashboard extends JPanel {
         };
 
         card.setOpaque(false);
-        card.setBorder(new EmptyBorder(20, 20, 20, 20));
+        card.setBorder(new EmptyBorder(8, 20, 20, 20));
 
         JLabel lbl = new JLabel(titulo);
         lbl.setForeground(new Color(180, 180, 220));

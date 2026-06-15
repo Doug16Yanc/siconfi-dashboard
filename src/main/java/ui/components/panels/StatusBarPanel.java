@@ -13,28 +13,31 @@ public class StatusBarPanel extends JPanel {
         setLayout(new FlowLayout(FlowLayout.LEFT, 24, 6));
         setBackground(Theme.STATUS_BG);
         setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.BORDER_LINE));
-        renderStaticContent("—", "—", "—");
+        renderDynamicContent("—", "—", "—", "—", "—");
     }
 
     public void atualizarDados(DashboardService.DashboardData data) {
         String dolar = String.format("R$ %.2f", data.dolar()).replace(".", ",");
         String selic = String.format("%.2f%%", data.selic());
         String ipca  = String.format("%.2f%%", data.ipca12m());
-        renderStaticContent(dolar, selic, ipca);
+        String pib   = String.format("%.2f%%", data.crescimentoPib());
+        String divida = String.format("%.1f%% do PIB", data.dividaBrutaPib()).replace(".", ",");
+
+        renderDynamicContent(dolar, selic, ipca, pib, divida);
     }
 
-    private void renderStaticContent(String dolar, String selic, String ipca) {
+    private void renderDynamicContent(String dolar, String selic, String ipca, String pib, String divida) {
         removeAll();
 
-        add(statusItem("DÓLAR",      dolar, "+0,00%", true));
+        add(statusItem("DÓLAR",      dolar,  "+0,00%", true));
         add(vDivider());
-        add(statusItem("SELIC",      selic, "0,00%",  true));
+        add(statusItem("SELIC",      selic,  "0,00%",  true));
         add(vDivider());
-        add(statusItem("IPCA (12m)", ipca,  "0,00%",  true));
+        add(statusItem("IPCA (12m)", ipca,   "0,00%",  true));
         add(vDivider());
-        add(statusItem("PIB (2025)", "2,90%", "+0,10%", true));
+        add(statusItem("PIB (Real - 2025)", pib,    "Ref. BCB", true));
         add(vDivider());
-        add(statusItem("Dívida Bruta do Gov.", "76,5% do PIB", "-0,3 pp", true));
+        add(statusItem("Dívida Bruta", divida, "Gov. Geral", true));
 
         JLabel next = new JLabel("Próxima atualização SICONFI: 01/06/2026 08:00");
         next.setForeground(Theme.TEXT_MAIN);
@@ -64,7 +67,11 @@ public class StatusBarPanel extends JPanel {
         val.setFont(FontManager.jetbrainsBold(15f));
 
         JLabel var = new JLabel(variation);
-        var.setForeground(positive ? new Color(0, 200, 100) : new Color(220, 60, 60));
+        if (variation.contains("%")) {
+            var.setForeground(positive ? new Color(0, 200, 100) : new Color(220, 60, 60));
+        } else {
+            var.setForeground(Theme.TEXT_MUTED);
+        }
         var.setFont(FontManager.jetbrains(15f));
 
         p.add(lbl); p.add(val); p.add(var);

@@ -16,8 +16,27 @@ void main() {
         ThemeManager.initialize();
 
         MainFrame frame = new MainFrame();
+        frame.setVisible(true);
 
-        DashboardService.DashboardData data = new DashboardService().carregarTudo();
-        frame.atualizarIndicadores(data);
+        Thread.ofVirtual().start(() -> {
+            try {
+                DashboardService service = new DashboardService();
+                DashboardService.DashboardData data = service.carregarTudo();
+
+                SwingUtilities.invokeLater(() -> {
+                    frame.atualizarIndicadores(data);
+                });
+
+            } catch (Exception e) {
+                System.err.println("[Main] Falha ao carregar dados iniciais: " + e.getMessage());
+
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(frame,
+                            "Erro ao carregar dados econômicos. O sistema tentará usar o cache local.",
+                            "Aviso de Conexão",
+                            JOptionPane.WARNING_MESSAGE);
+                });
+            }
+        });
     });
 }

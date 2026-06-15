@@ -11,9 +11,11 @@ import java.util.concurrent.TimeUnit;
 
 public class BcbClient {
 
+    private static final int SERIE_DOLAR_PTAX = 1;
     private static final int SERIE_SELIC_META = 432;
     private static final int SERIE_IPCA       = 433;
-    private static final int SERIE_DOLAR_PTAX = 1;
+    private static final int SERIE_PIB_CRESC  = 7326;
+    private static final int SERIE_DIVIDA_PIB = 13762;
 
     private final OkHttpClient http = new OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
@@ -24,6 +26,14 @@ public class BcbClient {
 
     public double fetchDolar() {
         return fetchUltimoValor(SERIE_DOLAR_PTAX, 1);
+    }
+
+    public double fetchSelic() {
+        List<BcbSerieItem> items = fetchSerie(SERIE_SELIC_META, 1);
+        if (items == null || items.isEmpty()) return 0.0;
+        BcbSerieItem last = items.get(items.size() - 1);
+        System.out.println("[BCB] SELIC raw — data: " + last.data + " valor: " + last.valor);
+        return last.valorDouble();
     }
 
     public double fetchIpca12m() {
@@ -40,12 +50,12 @@ public class BcbClient {
         return (fatorAcumulado - 1.0) * 100.0;
     }
 
-    public double fetchSelic() {
-        List<BcbSerieItem> items = fetchSerie(SERIE_SELIC_META, 1);
-        if (items == null || items.isEmpty()) return 0.0;
-        BcbSerieItem last = items.get(items.size() - 1);
-        System.out.println("[BCB] SELIC raw — data: " + last.data + " valor: " + last.valor);
-        return last.valorDouble();
+    public double fetchCrescimentoPib() {
+        return fetchUltimoValor(SERIE_PIB_CRESC, 2);
+    }
+
+    public double fetchDividaBrutaPib() {
+        return fetchUltimoValor(SERIE_DIVIDA_PIB, 2);
     }
 
     private double fetchUltimoValor(int serie, int ultimos) {

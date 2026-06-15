@@ -64,6 +64,7 @@ public class WaterfallChartPanel extends JPanel {
         axisY.setTickLabelPaint(TEXT);
         axisY.setAxisLineVisible(false);
         axisY.setNumberFormatOverride(new DecimalFormat("R$ #,##0.0 Bi"));
+        axisY.setUpperMargin(0.15);
 
         CategoryAxis axisX = plot.getDomainAxis();
         axisX.setTickLabelFont(FontManager.inter(13f));

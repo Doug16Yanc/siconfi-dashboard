@@ -1,4 +1,4 @@
-package ui.dashboard;
+package ui.components;
 
 import ui.theme.FontManager;
 import javax.swing.*;

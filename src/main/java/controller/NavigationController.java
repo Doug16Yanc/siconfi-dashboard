@@ -1,9 +1,10 @@
 package controller;
 
+import service.ComparacoesService;
 import service.DashboardService;
 import ui.MainFrame;
+import ui.components.panels.*;
 import ui.dashboard.Dashboard;
-import ui.components.panels.TimeSeriesPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,6 +26,7 @@ public class NavigationController {
 
     private final MainFrame        frame;
     private final DashboardService service;
+    private final ComparacoesService comparacoesService = new ComparacoesService();
 
     private String idEnte  = DashboardService.DEFAULT_ID_ENTE;
     private int    ano     = DashboardService.DEFAULT_ANO;
@@ -72,6 +74,11 @@ public class NavigationController {
         switch (destino) {
             case VISAO_GERAL      -> carregarVisaoGeral();
             case RESULTADO_FISCAL -> carregarSerie();
+            case RECEITAS -> carregarReceitas();
+            case DESPESAS -> carregarDespesas();
+            case COMPARACOES -> carregarComparacoes();
+            case RESTOS_A_PAGAR -> carregarRestosAPagar();
+            case DIVIDA_CONSOLIDADA -> carregarDividaConsolidada();
             default               -> frame.setContent(painelPlaceholder(destino.name()));
         }
     }
@@ -146,7 +153,63 @@ public class NavigationController {
         return p;
     }
 
-    public String getIdEnte()  { return idEnte;  }
-    public int    getAno()     { return ano;      }
-    public int    getPeriodo() { return periodo;  }
+
+    private void carregarReceitas() {
+        frame.setContent(painelCarregando("Carregando receitas..."));
+        Thread.ofVirtual().start(() -> {
+            try {
+                var data = service.carregarTudo(idEnte, ano, periodo);
+                SwingUtilities.invokeLater(() -> frame.setContent(new ReceitasPanel(data)));
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() ->
+                        frame.setContent(painelErro("Erro: " + e.getMessage())));
+            }
+        });
+    }
+
+    private void carregarDespesas() {
+        frame.setContent(painelCarregando("Carregando despesas..."));
+        Thread.ofVirtual().start(() -> {
+            try {
+                var data = service.carregarTudo(idEnte, ano, periodo);
+                SwingUtilities.invokeLater(() -> frame.setContent(new DespesasPanel(data)));
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() ->
+                        frame.setContent(painelErro("Erro: " + e.getMessage())));
+            }
+        });
+    }
+
+    private void carregarDividaConsolidada() {
+        frame.setContent(painelCarregando("Carregando dívida consolidada..."));
+        Thread.ofVirtual().start(() -> {
+            try {
+                var data = service.carregarTudo(idEnte, ano, periodo);
+                SwingUtilities.invokeLater(() ->
+                        frame.setContent(new DividaConsolidadaPanel(data)));
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() ->
+                        frame.setContent(painelErro("Erro: " + e.getMessage())));
+            }
+        });
+    }
+
+    private void carregarComparacoes() {
+        frame.setContent(new ComparacoesPanel(comparacoesService, ano));
+    }
+
+    private void carregarRestosAPagar() {
+        frame.setContent(painelCarregando("Carregando restos a pagar..."));
+        Thread.ofVirtual().start(() -> {
+            try {
+                var data = service.carregarTudo(idEnte, ano, periodo);
+                SwingUtilities.invokeLater(() ->
+                        frame.setContent(new RestosAPagarPanel(data)));
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() ->
+                        frame.setContent(painelErro("Erro: " + e.getMessage())));
+            }
+        });
+    }
+
 }

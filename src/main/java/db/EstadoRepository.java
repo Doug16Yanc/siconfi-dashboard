@@ -7,11 +7,11 @@ import java.sql.SQLException;
 
 public class EstadoRepository {
 
-    public record InfoEstado(String nome, long populacao) {}
+    public record InfoEstado(String sigla, String nome, long populacao) {}
 
     public InfoEstado buscarPorId(String idEnte) {
         String sql = """
-            SELECT nome, COALESCE(populacao, 1) as populacao 
+            SELECT sigla, nome, COALESCE(populacao, 1) as populacao 
             FROM estado_cache 
             WHERE id_ente = ?
             """;
@@ -23,15 +23,16 @@ public class EstadoRepository {
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
+                    String sigla = rs.getString("sigla");
                     String nome = rs.getString("nome");
                     long populacao = rs.getLong("populacao");
-                    return new InfoEstado(nome, populacao);
+                    return new InfoEstado(sigla, nome, populacao);
                 }
             }
         } catch (SQLException e) {
             System.err.println("[DB] Erro ao buscar metadados do estado: " + e.getMessage());
         }
 
-        return new InfoEstado("Ente " + idEnte, 1L);
+        return new InfoEstado("", "Ente " + idEnte, 1L);
     }
 }

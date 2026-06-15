@@ -78,7 +78,8 @@ public class SnapshotRepository {
     public List<DashboardData> buscarSerie(String idEnte, int ano) {
         // Adicionado JOIN para trazer nome e populacao na listagem da série temporal
         String sql = """
-            SELECT s.receita_total, s.despesa_total, s.resultado_primario,
+            
+                SELECT s.receita_total, s.despesa_total, s.resultado_primario,
                    s.rcl_total, s.selic, s.ipca_12m, s.dolar, s.nr_periodo,
                    COALESCE(e.nome, 'Ente ' || s.id_ente) as nome_ente,
                    COALESCE(e.populacao, 1) as populacao
@@ -105,22 +106,46 @@ public class SnapshotRepository {
 
     private DashboardData mapRow(ResultSet rs, String idEnte, int ano, int periodo)
             throws SQLException {
+        double rclTotal = rs.getDouble("rcl_total");
         return new DashboardData(
                 rs.getDouble("receita_total"),
                 rs.getDouble("despesa_total"),
                 rs.getDouble("resultado_primario"),
-                rs.getDouble("rcl_total"),
+                rclTotal,
+                Map.of(),
+                Map.of(),
+                Map.of(),
+                Map.of(),
+                Map.of(),
+                Map.of(),
                 Map.of(),
                 Map.of(),
                 rs.getDouble("selic"),
                 rs.getDouble("ipca_12m"),
                 rs.getDouble("dolar"),
+                rs.getDouble("crescimento_pib"),
+                rs.getDouble("divida_bruta_pib"),
                 rs.getLong("populacao"),
                 rs.getString("nome_ente"),
                 formatarPeriodo(ano, periodo),
                 idEnte,
                 ano,
-                periodo
+                periodo,
+                rs.getDouble("mde_percentual_aplicado"),
+                25.0,
+                rs.getDouble("op_credito_total"),
+                rs.getDouble("op_credito_limite_rcl"),
+                rs.getDouble("op_credito_percentual_rcl"),
+                rs.getDouble("restos_processados"),
+                rs.getDouble("restos_nao_processados"),
+                rs.getDouble("restos_total"),
+                rs.getDouble("dividaConsolidada"),
+                rs.getDouble("dividaConsolidadaLiquida"),
+                rs.getDouble("deducoesDivida"),
+                rs.getDouble("amortizacaoDotacao"),
+                rs.getDouble("amortizacaoLiquidacao"),
+                rs.getDouble("jurosLiquidacao"),
+                rs.getDouble("jurosDotacao")
         );
     }
 

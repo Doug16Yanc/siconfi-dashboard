@@ -22,12 +22,11 @@ public class PerCapitaPanel extends JPanel {
     private final String nomeEnte;
     private final long   populacao;
 
-    // Construtor limpo, recebendo a população tratada de forma dinâmica
     public PerCapitaPanel(double receita, double despesa, double resultado,
                           long populacao, String nomeEnte) {
         setOpaque(false);
         this.nomeEnte  = nomeEnte;
-        this.populacao = populacao > 0 ? populacao : 1L; // Evita divisão por zero
+        this.populacao = populacao > 0 ? populacao : 1L;
 
         double recPC  = receita   / this.populacao;
         double despPC = despesa   / this.populacao;
