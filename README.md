@@ -2,8 +2,7 @@
 
 Dashboard de finanças públicas brasileiras construído com **Java 25 + Swing**, consumindo dados reais da API do Tesouro Nacional (Siconfi) e do Banco Central do Brasil (BCB) em tempo real.
 
-<video src="https://github.com/user-attachments/assets/d876a7bf-61b1-490c-b32a-e49471e9bcc5" width="100%" controls></video>
-
+<video src="https://github.com/user-attachments/assets/70c20ec2-bba7-47fc-a083-51010bad132a" width="100%" controls></video>
 
 ---
 
